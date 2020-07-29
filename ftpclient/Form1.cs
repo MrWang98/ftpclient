@@ -187,7 +187,12 @@ namespace ftpclient
                 string pattern = @"([0-1]?[0-9]|2[0-3]):([0-5][0-9])";
                 Match match = Regex.Matches(absFilePath, pattern)[0];
                 string[] temp = Regex.Split(absFilePath, match.Value+" ");
-                listBox3.Items.Add(temp[1]);
+                string[] temp2 = new string[temp.Length - 1];
+                for(int i=1;i<temp.Length; i++)
+                {
+                    temp2[i - 1] = temp[i];
+                }
+                listBox3.Items.Add(String.Join(match.Value + " ",temp2));
             }
 
             closeDataPort();
