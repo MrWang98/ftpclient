@@ -1,0 +1,10 @@
+D:\编程\ftpclient\ftpclient\bin\Debug\ftpclient.exe.config
+D:\编程\ftpclient\ftpclient\bin\Debug\ftpclient.exe
+D:\编程\ftpclient\ftpclient\bin\Debug\ftpclient.pdb
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.csprojAssemblyReference.cache
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.Form1.resources
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.Properties.Resources.resources
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.csproj.GenerateResource.cache
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.csproj.CoreCompileInputs.cache
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.exe
+D:\编程\ftpclient\ftpclient\obj\Debug\ftpclient.pdb
