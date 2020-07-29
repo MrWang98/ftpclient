@@ -184,8 +184,10 @@ namespace ftpclient
             listBox3.Items.Clear();
             while ((absFilePath = dataStrmRdr.ReadLine()) != null)
             {
-                string[] temp = Regex.Split(absFilePath, " ");
-                listBox3.Items.Add(temp[temp.Length - 1]);
+                string pattern = @"([0-1]?[0-9]|2[0-3]):([0-5][0-9])";
+                Match match = Regex.Matches(absFilePath, pattern)[0];
+                string[] temp = Regex.Split(absFilePath, match.Value+" ");
+                listBox3.Items.Add(temp[1]);
             }
 
             closeDataPort();
@@ -243,7 +245,6 @@ namespace ftpclient
             cmdData = "STOR " + fileName + CRLF;
             char[] a = cmdData.ToCharArray();
             byte[] b = System.Text.Encoding.UTF8.GetBytes(a);
-            //szData = System.Text.Encoding.ASCII.GetBytes(a);
             szData = b;
             cmdStrmWtr.Write(szData, 0, szData.Length);
             this.getSatus();
@@ -282,7 +283,6 @@ namespace ftpclient
             this.openDataPort();
 
             cmdData = "RETR " + fileName + CRLF;
-            //szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
             szData = System.Text.Encoding.UTF8.GetBytes(cmdData.ToCharArray());
             cmdStrmWtr.Write(szData, 0, szData.Length);
             this.getSatus();
