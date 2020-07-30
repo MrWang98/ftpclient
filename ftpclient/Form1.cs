@@ -186,13 +186,22 @@ namespace ftpclient
             {
                 string pattern = @"([0-1]?[0-9]|2[0-3]):([0-5][0-9])";
                 Match match = Regex.Matches(absFilePath, pattern)[0];
-                string[] temp = Regex.Split(absFilePath, match.Value+" ");
+                string[] temp = Regex.Split(absFilePath, match.Value + " ");
                 string[] temp2 = new string[temp.Length - 1];
-                for(int i=1;i<temp.Length; i++)
+                for (int i = 1; i < temp.Length; i++)
                 {
                     temp2[i - 1] = temp[i];
                 }
-                listBox3.Items.Add(String.Join(match.Value + " ",temp2));
+                if (absFilePath.IndexOf("d", StringComparison.OrdinalIgnoreCase) != 0)//显示非文件夹文件
+                {
+                    listBox3.Items.Add(String.Join(match.Value + " ", temp2));
+                }
+                
+
+
+                //判断是否是文件
+                //absFilePath.IndexOf("d", StringComparison.OrdinalIgnoreCase) == 0
+
             }
 
             closeDataPort();
@@ -246,6 +255,7 @@ namespace ftpclient
             string filePath = textBox5.Text + "\\" + fileName;
 
             this.openDataPort();
+            
 
             cmdData = "STOR " + fileName + CRLF;
             char[] a = cmdData.ToCharArray();
@@ -287,19 +297,53 @@ namespace ftpclient
 
             this.openDataPort();
 
+
+
             cmdData = "RETR " + fileName + CRLF;
             szData = System.Text.Encoding.UTF8.GetBytes(cmdData.ToCharArray());
             cmdStrmWtr.Write(szData, 0, szData.Length);
             this.getSatus();
 
-            FileStream fstrm = new FileStream(filePath, FileMode.OpenOrCreate);
+
             char[] fchars = new char[1030];
             byte[] fbytes = new byte[1030];
             int cnt = 0;
-            while ((cnt = dataStrmWtr.Read(fbytes, 0, 1024)) > 0)
+            FileStream fstrm;
+
+
+            long size_t;
+            int offset;
+            if (File.Exists(filePath))//断点续传
             {
-                fstrm.Write(fbytes, 0, cnt);
+                if ((int)MessageBox.Show("文件已存在，是否覆盖","提示",MessageBoxButtons.OKCancel,MessageBoxIcon.Exclamation)==2)
+                {
+                    FileInfo fi = new FileInfo(filePath);
+                    offset = int.Parse(fi.Length.ToString().Split('.')[0]);
+                    fstrm = new FileStream(filePath, FileMode.Append);
+                    dataStrmWtr.Read(fbytes, 0, offset);
+                    while ((cnt = dataStrmWtr.Read(fbytes, 0, 1024)) > 0)
+                    {
+                        fstrm.Write(fbytes, 0, cnt);
+                    }
+                }
+                else
+                {
+                    fstrm = new FileStream(filePath, FileMode.Open);
+                    while ((cnt = dataStrmWtr.Read(fbytes, 0, 1024)) > 0)
+                    {
+                        fstrm.Write(fbytes, 0, cnt);
+                    }
+                }
             }
+            else
+            {
+                fstrm = new FileStream(filePath, FileMode.Create);
+                while ((cnt = dataStrmWtr.Read(fbytes, 0, 1024)) > 0)
+                {
+                    fstrm.Write(fbytes, 0, cnt);
+                }
+            }
+            
             fstrm.Close();
 
             this.closeDataPort();
