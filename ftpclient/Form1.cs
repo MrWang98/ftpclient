@@ -256,36 +256,8 @@ namespace ftpclient
 
             this.openDataPort();
 
-
-            //判断服务器中是否已含有同名文件，若不覆盖，则进行断点续传，读取文件大小
-            int tmp_t, length_t = 0;
-            bool flag = false;
-            for(int index = 0; index<listBox3.Items.Count;index++)
-            {
-                if (listBox3.Items[index].ToString() == fileName&&(int)MessageBox.Show("文件已存在，是否覆盖","提示",MessageBoxButtons.OKCancel,MessageBoxIcon.Exclamation)==2)
-                {
-                    flag = true;
-                    cmdData = "RETR " + fileName + CRLF;
-                    szData = System.Text.Encoding.UTF8.GetBytes(cmdData.ToCharArray());
-                    cmdStrmWtr.Write(szData, 0, szData.Length);
-                    byte[] fbytes_t = new byte[1030];
-
-                    while ((tmp_t = dataStrmWtr.Read(fbytes_t, 0, 1024)) > 0)
-                    {
-                        length_t = length_t + tmp_t;
-                    }
-                    this.getSatus();
-                }
-            }
-
-            if (flag == false)//不需要断点续传则正常进行，否则移动到该文件的末尾进行
-            {
-                cmdData = "STOR " + fileName + CRLF;
-            }
-            else
-            {
-                cmdData = "APPE " + fileName + CRLF;
-            }
+            
+            cmdData = "STOR " + fileName + CRLF;
             char[] a = cmdData.ToCharArray();
             byte[] b = System.Text.Encoding.UTF8.GetBytes(a);
             szData = b;
@@ -294,10 +266,7 @@ namespace ftpclient
 
             FileStream fstrm = new FileStream(filePath, FileMode.Open);
             byte[] fbytes = new byte[1030];
-            byte[] fbytes2 = new byte[1030];
-            fstrm.Read(fbytes2, 0, 1024);
             int cnt = 0;
-            if (length_t > 0) fstrm.Position = length_t;
             while ((cnt = fstrm.Read(fbytes, 0, 1024)) > 0)
             {
                 dataStrmWtr.Write(fbytes, 0, cnt);
@@ -344,7 +313,7 @@ namespace ftpclient
 
             long size_t;
             int offset;
-            if (File.Exists(filePath))//断点续传
+            if (File.Exists(filePath))//断点续传，如果本地文件已存在且不覆盖，则进行断点续传
             {
                 if ((int)MessageBox.Show("文件已存在，是否覆盖","提示",MessageBoxButtons.OKCancel,MessageBoxIcon.Exclamation)==2)
                 {
