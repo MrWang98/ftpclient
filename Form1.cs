@@ -108,7 +108,22 @@ namespace FTPClient
 
         private void uploadButton_Click(object sender, EventArgs e)
         {
-            //string filePath = localDir+
+            string filePath = localDir
+                + (Regex.Split(localDir, @"\\").Last() == "" ? "" : "\\")
+                + localFileStr;
+
+            write(commandStreamWriter, "STOR " + localFileStr + CRLF);
+            read(commandStreamReader);
+
+            FileStream fileStream = new FileStream(filePath, FileMode.Open);
+            byte[] fileBytes = new byte[1030];
+            int count;
+            if((count = fileStream.Read(fileBytes, 0, 1024)) > 0)
+            {
+                dataStreamWriter.Write(fileBytes, 0, count);
+            }
+            fileStream.Close();
+            getRemoteFileList();
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
@@ -118,7 +133,35 @@ namespace FTPClient
 
         private void downloadButton_Click(object sender, EventArgs e)
         {
+            string filePath = localDir
+                + (Regex.Split(localDir, @"\\").Last() == "" ? "" : "\\")
+                + remoteFIleStr;
+            FileStream fileStream;
 
+            if (File.Exists(filePath))
+            {
+                FileInfo fileInfo = new FileInfo(filePath);
+                int offset = Convert.ToInt32(fileInfo.Length.ToString().Split('.')[0]);
+                write(commandStreamWriter, "REST" + offset + CRLF);
+                read(commandStreamReader);
+                fileStream = new FileStream(filePath, FileMode.Append);
+            }
+            else
+            {
+                write(commandStreamWriter, "RETR " + remoteFIleStr + CRLF);
+                read(commandStreamReader);
+                fileStream = new FileStream(filePath, FileMode.Open);
+            }
+
+            
+            byte[] fileBytes = new byte[1030];
+            int count = 0;
+            while ((count = dataStreamWriter.Read(fileBytes, 0, 1024)) > 0)
+            {
+                fileStream.Write(fileBytes, 0, count);
+            }
+            fileStream.Close();
+            refreshLocalDir(localDir);
         }
 
         private void localListView_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -191,7 +234,7 @@ namespace FTPClient
         }
         #endregion
 
-        public void refreshLocalDir(string path)
+        private void refreshLocalDir(string path)
         {
             localDirTextBox.Text = localDir = path;
             localListView.Items.Clear();
@@ -327,7 +370,8 @@ namespace FTPClient
             }
             else
             {
-                createDataConnection();
+                getRemoteFilePath();
+                getRemoteFileList();
             }
         }
 
@@ -369,12 +413,15 @@ namespace FTPClient
                 logListBox.Items.Add("Connect to Data Client success!");
                 dataStreamReader = new StreamReader(dataClient.GetStream());
                 dataStreamWriter = dataClient.GetStream();
-                getRemoteFilePath();
-                getRemoteFileList();
             }
         }
 
-        public void getRemoteFilePath()
+        private void closeDataConnection()
+        {
+
+        }
+
+        private void getRemoteFilePath()
         {
             write(commandStreamWriter, "PWD" + CRLF);
             string res = read(commandStreamReader);
@@ -385,20 +432,22 @@ namespace FTPClient
             }
         }
 
-        public void changeRemoteFilePath(string path)
+        private void changeRemoteFilePath(string path)
         {
             string res;
             write(commandStreamWriter, "CWD " + path + CRLF);
             res = read(commandStreamReader);
-            if (res.Contains("250"))
+            if (res.Contains("226"))
             {
                 remoteDir = remoteDirTextBox.Text = path;
                 logListBox.Items.Add("Current Remote Directory:" + path);
             }
         }
 
-        public void getRemoteFileList()
+        private void getRemoteFileList()
         {
+            createDataConnection();
+
             string res;
             write(commandStreamWriter, "LIST" + CRLF);
             read(commandStreamReader);
