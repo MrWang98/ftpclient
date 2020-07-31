@@ -329,7 +329,6 @@ namespace FTPClient
             {
                 createDataConnection();
             }
-
         }
 
         private void createDataConnection()

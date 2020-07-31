@@ -246,6 +246,7 @@
             // 
             // deleteButton
             // 
+            this.deleteButton.Enabled = false;
             this.deleteButton.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.deleteButton.Location = new System.Drawing.Point(766, 408);
             this.deleteButton.Name = "deleteButton";
@@ -257,6 +258,7 @@
             // 
             // downloadButton
             // 
+            this.downloadButton.Enabled = false;
             this.downloadButton.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.downloadButton.Location = new System.Drawing.Point(872, 408);
             this.downloadButton.Name = "downloadButton";
