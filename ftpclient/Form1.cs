@@ -63,6 +63,47 @@ namespace ftpclient
                     retstr = this.getSatus().Substring(0, 3);
                     if (Convert.ToInt32(retstr) == 530) throw new InvalidOperationException("帐号密码错误");
 
+                    /*cmdData = "PWD"  + CRLF;
+                    szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
+                    cmdStrmWtr.Write(szData, 0, szData.Length);
+                    string message=this.getSatus();
+                    string remoteDir;
+                    if (message.Contains("257"))
+                    {
+                        remoteDir = Regex.Split(message, "\"")[1];
+                    }
+
+                    cmdData = "CWD " + "/home" + CRLF;
+                    szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
+                    cmdStrmWtr.Write(szData, 0, szData.Length);
+                    string messageCWD = this.getSatus();
+
+                    cmdData = "PWD" + CRLF;
+                    szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
+                    cmdStrmWtr.Write(szData, 0, szData.Length);
+                    string message2 = this.getSatus();
+                    string remoteDirCWD;
+                    if (message2.Contains("257"))
+                    {
+                        remoteDirCWD = Regex.Split(message2, "\"")[1];
+                    }
+
+                    cmdData = "CDUP" + CRLF;
+                    szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
+                    cmdStrmWtr.Write(szData, 0, szData.Length);
+                    string messageCDUP=this.getSatus();
+
+                    cmdData = "PWD" + CRLF;
+                    szData = System.Text.Encoding.ASCII.GetBytes(cmdData.ToCharArray());
+                    cmdStrmWtr.Write(szData, 0, szData.Length);
+                    string message3 = this.getSatus();
+                    string remoteDirCDUP;
+                    if (message.Contains("257"))
+                    {
+                        remoteDirCDUP = Regex.Split(message3, "\"")[1];
+                    }*/
+
+
                     this.freshFileBox_Right();
 
                     label1.Text = textBox1.Text + ":";
@@ -184,18 +225,21 @@ namespace ftpclient
             listBox3.Items.Clear();
             while ((absFilePath = dataStrmRdr.ReadLine()) != null)
             {
+                //
                 string pattern = @"([0-1]?[0-9]|2[0-3]):([0-5][0-9])";
-                Match match = Regex.Matches(absFilePath, pattern)[0];
-                string[] temp = Regex.Split(absFilePath, match.Value + " ");
-                string[] temp2 = new string[temp.Length - 1];
-                for (int i = 1; i < temp.Length; i++)
+                Match match = Regex.Matches(absFilePath, pattern)[0];//匹配文件信息中的“时间”，例如00：00
+                string[] msgStrings = Regex.Split(absFilePath, match.Value + " ");//从 “时间”+空格 处分割文件信息字符串成前后两个，因为防止文件名中有同样的时间+空格，所以要再设个字符串数组
+                                                                            //将文件名的字符串收集起来，假如文件名里有时间且也被分割的话，就用第二个字符串数组把文件名再拼接起来
+                string[] collection = new string[msgStrings.Length - 1];//收集文件名的字符串
+                for (int i = 1; i < msgStrings.Length; i++)
                 {
-                    temp2[i - 1] = temp[i];
+                    collection[i - 1] = msgStrings[i];
                 }
                 if (absFilePath.IndexOf("d", StringComparison.OrdinalIgnoreCase) != 0)//显示非文件夹文件
                 {
-                    listBox3.Items.Add(String.Join(match.Value + " ", temp2));
+                    listBox3.Items.Add(String.Join(match.Value + " ", collection));//拼接并输出
                 }
+            
                 
 
 
