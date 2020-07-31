@@ -108,7 +108,7 @@ namespace FTPClient
 
         private void uploadButton_Click(object sender, EventArgs e)
         {
-
+            //string filePath = localDir+
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
@@ -132,6 +132,7 @@ namespace FTPClient
                 if (!Directory.Exists(parent))
                     return;
                 refreshLocalDir(parent);
+                return;
             }
             if (info.Item == null || info.Item.Tag.ToString() == "files")
                 return;
@@ -153,6 +154,7 @@ namespace FTPClient
                 parent += parent.Contains("/") ? "" : "/";
                 changeRemoteFilePath(parent);
                 getRemoteFileList();
+                return;
             }
             if (info.Item == null || info.Item.Tag.ToString() == "files")
                 return;
@@ -226,8 +228,6 @@ namespace FTPClient
                 localListView.Items.Add(item);
             }
         }
-
-
 
         private bool isEmpty(string s)
         {
