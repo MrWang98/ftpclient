@@ -85,6 +85,7 @@ namespace FTPClient
                     return;
                 }
                 connect();
+                login();
             }
             else
             {
@@ -108,6 +109,7 @@ namespace FTPClient
 
         private void uploadButton_Click(object sender, EventArgs e)
         {
+            createDataConnection();
             string filePath = localDir
                 + (Regex.Split(localDir, @"\\").Last() == "" ? "" : "\\")
                 + localFileStr;
@@ -123,12 +125,21 @@ namespace FTPClient
                 dataStreamWriter.Write(fileBytes, 0, count);
             }
             fileStream.Close();
+            dataStreamReader.Close();
+            dataStreamWriter.Close();
+            read(commandStreamReader);
+            write(commandStreamWriter, "ABOR" + CRLF);
+            read(commandStreamReader);
+
             getRemoteFileList();
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
         {
+            write(commandStreamWriter, "DELE " + remoteFIleStr + CRLF);
+            read(commandStreamReader);
 
+            getRemoteFileList();
         }
 
         private void downloadButton_Click(object sender, EventArgs e)
@@ -150,7 +161,7 @@ namespace FTPClient
             {
                 write(commandStreamWriter, "RETR " + remoteFIleStr + CRLF);
                 read(commandStreamReader);
-                fileStream = new FileStream(filePath, FileMode.Open);
+                fileStream = new FileStream(filePath, FileMode.Create);
             }
 
             
@@ -192,8 +203,13 @@ namespace FTPClient
             ListViewHitTestInfo info = remoteListView.HitTest(e.X, e.Y);
             if (info.Item.Text == "...")
             {
-                string parent = remoteDir.Replace(
-                    "/" + Regex.Split(remoteDir, @"/").Last(), string.Empty);
+                string parent = "";
+                string[] strings = Regex.Split(remoteDir, "/");
+                for(int i = 1;i < strings.Length; i++)
+                {
+                    if (i != strings.Length - 1)
+                        parent += "/" + strings[i];
+                }
                 parent += parent.Contains("/") ? "" : "/";
                 changeRemoteFilePath(parent);
                 getRemoteFileList();
@@ -210,7 +226,7 @@ namespace FTPClient
 
         private void RemoteListView_Click(object sender, EventArgs e)
         {
-            if (remoteListView.SelectedItems.Count == 0)
+            if (remoteListView.SelectedItems.Count == 0 || remoteListView.SelectedItems[0].Text == "...")
             {
                 downloadButton.Enabled = false;
                 deleteButton.Enabled = false;
@@ -223,7 +239,7 @@ namespace FTPClient
 
         private void localListView_Click(object sender, EventArgs e)
         {
-            if (localListView.SelectedItems.Count == 0)
+            if (localListView.SelectedItems.Count == 0 || localListView.SelectedItems[0].Text == "...")
             {
                 uploadButton.Enabled = false;
                 return;
@@ -305,7 +321,6 @@ namespace FTPClient
                 commandStreamReader = new StreamReader(commandClient.GetStream());
                 commandStreamWriter = commandClient.GetStream();
                 read(commandStreamReader);
-                login();
             }
         }
 
@@ -315,10 +330,10 @@ namespace FTPClient
             {
                 remoteDirTextBox.Clear();
                 remoteListView.Clear();
-                write(commandStreamWriter, "ABOR" + CRLF);
-                read(commandStreamReader);
                 dataStreamReader.Close();
                 dataStreamWriter.Close();
+                write(commandStreamWriter, "ABOR" + CRLF);
+                read(commandStreamReader);
                 dataClient.Close();
                 dataClient.Dispose();
                 logListBox.Items.Add("Data Connection Closed");
@@ -362,7 +377,7 @@ namespace FTPClient
 
             write(commandStreamWriter, "PASS " + Password + CRLF);
             res = read(commandStreamReader);
-            if (Convert.ToInt32(res) == 530)
+            if (res.Contains("530"))
             {
                 MessageBox.Show("Invalid Password");
                 logListBox.Items.Add("Invalid Password");
@@ -416,15 +431,11 @@ namespace FTPClient
             }
         }
 
-        private void closeDataConnection()
-        {
-
-        }
-
         private void getRemoteFilePath()
         {
+            string res;
             write(commandStreamWriter, "PWD" + CRLF);
-            string res = read(commandStreamReader);
+            res = read(commandStreamReader);
             if (res.Contains("257"))
             {
                 remoteDir = remoteDirTextBox.Text = Regex.Split(res, "\"")[1];
@@ -437,7 +448,7 @@ namespace FTPClient
             string res;
             write(commandStreamWriter, "CWD " + path + CRLF);
             res = read(commandStreamReader);
-            if (res.Contains("226"))
+            if (res.Contains("250"))
             {
                 remoteDir = remoteDirTextBox.Text = path;
                 logListBox.Items.Add("Current Remote Directory:" + path);
@@ -447,9 +458,9 @@ namespace FTPClient
         private void getRemoteFileList()
         {
             createDataConnection();
-
             string res;
-            write(commandStreamWriter, "LIST" + CRLF);
+            write(commandStreamWriter, "LIST " + CRLF);
+            read(commandStreamReader);
             read(commandStreamReader);
 
             remoteListView.Clear();
@@ -464,6 +475,8 @@ namespace FTPClient
             while ((res = read(dataStreamReader)) != null)
             {
                 string pattern = @"([0-1]?[0-9]|2[0-3]):([0-5][0-9])";
+                if (Regex.Matches(res, pattern).Count <= 0)
+                    continue;
                 Match match = Regex.Matches(res, pattern)[0];
                 string[] msgStrings = Regex.Split(res, match.Value + " ");
                 string[] collection = new string[msgStrings.Length - 1];
@@ -476,15 +489,17 @@ namespace FTPClient
                 {
                     ListViewItem item = new ListViewItem(String.Join(match.Value + " ", collection));
                     item.Tag = "file";
-                    remoteListView.Items.Insert(directoryNum + fileNum + 1, item);
+                    remoteListView.Items.Insert(directoryNum + fileNum + (remoteDir != "/" ? 1 : 0), item);
                     fileNum++;
                 }
                 else
                 {
+                    if (String.Join(match.Value + " ", collection).Contains("->")) 
+                        continue;
                     ListViewItem item = new ListViewItem(String.Join(match.Value + " ", collection));
                     item.Tag = "directory";
                     item.ForeColor = Color.BlueViolet;
-                    remoteListView.Items.Insert(directoryNum + 1, item);
+                    remoteListView.Items.Insert(directoryNum + (remoteDir != "/" ? 1 : 0), item);
                     directoryNum++;
                 }
             }
